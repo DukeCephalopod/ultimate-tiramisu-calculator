@@ -115,38 +115,43 @@
       }
 
       function update() {
-        const biscuits = Number.parseInt(document.getElementById('biscuits').value || '0', 10)
-        const brewMethod = document.querySelector('input[name="method"]:checked').value
-        const espressoDose = Number.parseFloat(document.getElementById('dose').value || '0', 10)
+        const biscuits = Number.parseInt(document.getElementById('biscuits')?.value || '0', 10)
+        const brewMethod = document.querySelector('input[name="method"]:checked')?.value
+        const espressoDose = Number.parseFloat(document.getElementById('dose')?.value || '0', 10)
+
         const coffeeAmount = getCoffeeAmount(brewMethod, biscuits, espressoDose)
         const totalCoffee = calculateTotalCoffee(biscuits)
         const shots = calculateShots(totalCoffee, espressoDose)
         const { fullBatches, remainder, remainderWater } = calculateAeropressBatches(totalCoffee)
-        const coffeeLiquid = biscuits * 15
-        const halfCoffeeLiquid = coffeeLiquid / 2
-        const salineDrops = biscuits * 0.25
+        const coffeeLiquid = biscuits * 15;
 
         document.getElementById('instructions').style.display = biscuits > 0 ? 'block' : 'none'
-        document.getElementById('update-biscuits').innerText = formatNumber(biscuits)
-        document.getElementById('update-coffee-amount').innerText = formatNumber(coffeeAmount)
-        document.getElementById('update-mascarpone-amount').innerText = formatNumber(biscuits * 20)
-        document.getElementById('update-egg-yolks').innerText = formatNumber(biscuits * 0.25, true)
-        document.getElementById('update-sugar-amount').innerText = formatNumber(biscuits * 4)
-        document.getElementById('update-shots').innerText = shots
-        document.getElementById('update-total-coffee').innerText = formatNumber(totalCoffee)
-        document.getElementById('update-full-batches').innerText = `${fullBatches} batch${fullBatches > 1 ? 'es' : ''}`
-        document.getElementById('update-remainder').innerText = formatNumber(remainder)
-        document.getElementById('update-remainder-water').innerText = formatNumber(remainderWater)
-        document.querySelectorAll('.update-coffee-liquid').forEach((el) => {
-          el.innerText = formatNumber(coffeeLiquid)
-        })
-        document.querySelectorAll('.update-half-coffee-liquid').forEach((el) => {
-          el.innerText = formatNumber(halfCoffeeLiquid)
-        })
-        document.querySelectorAll('.update-saline-drops').forEach((el) => {
-          el.innerText = formatNumber(salineDrops, true)
-        })
+        const data = {
+          coffeeAmount: formatNumber(coffeeAmount),
+          coffeeLiquid: formatNumber(coffeeLiquid),
+          biscuits: formatNumber(biscuits),
+          mascarponeAmount: formatNumber(biscuits * 20),
+          eggYolks: formatNumber(biscuits * 0.25, true),
+          sugarAmount: formatNumber(biscuits * 4),
 
+          shots: shots,
+          totalCoffee: formatNumber(totalCoffee),
+          fullBatches: `${fullBatches} batch${fullBatches > 1 ? 'es' : ''}`,
+          remainder: formatNumber(remainder),
+          remainderWater: formatNumber(remainderWater),
+
+          halfCoffeeLiquid: formatNumber(coffeeLiquid / 2),
+          salineDrops: formatNumber(biscuits * 0.25, true),
+        };
+
+        document.querySelectorAll('[data-from]').forEach(el => {
+          const key = el.dataset.from;
+          if (key in data) {
+            el.innerText = data[key];
+          } else {
+            console.warn('Element', el, 'wants data from key', key, 'that has no value, skipping.');
+          }
+        });
         document.querySelectorAll('.show-aeropress').forEach((el) => {
           const showMode = el.nodeName === 'LI' ? 'list-item' : 'block'
           el.style.display = brewMethod === 'aeropress' ? showMode : 'none'
@@ -201,13 +206,13 @@
         <div class="recipe-section">
           <h3>Ingredients</h3>
           <ul>
-            <li><span id="update-biscuits"></span> Savoiardi biscuits</li>
-            <li><span id="update-coffee-amount"></span>g of ground coffee</li>
-            <li><span id="update-mascarpone-amount"></span>g of mascarpone cheese</li>
-            <li><span id="update-egg-yolks"></span> egg yolks</li>
-            <li><span id="update-sugar-amount"></span>g of sugar</li>
+            <li><span data-from="biscuits"></span> Savoiardi biscuits</li>
+            <li><span data-from="coffeeAmount"></span>g of ground coffee</li>
+            <li><span data-from="mascarponeAmount"></span>g of mascarpone cheese</li>
+            <li><span data-from="eggYolks"></span> egg yolks</li>
+            <li><span data-from="sugarAmount"></span>g of sugar</li>
             <li>
-              <span class="update-saline-drops"></span> drops saline solution (to make saline: dissolve 5g of salt in
+              <span data-from="salineDrops"></span> drops saline solution (to make saline: dissolve 5g of salt in
               20g of boiling water, store in a dropper bottle)
             </li>
             <li>Cocoa Powder to finish</li>
@@ -228,28 +233,28 @@
             </ul>
           </div>
           <ol>
-            <li class="show-espresso">Brew <span id="update-shots"></span> double shots of espresso.</li>
+            <li class="show-espresso">Brew <span data-from="shots"></span> double shots of espresso.</li>
             <li class="show-aeropress">
-              For the total <span id="update-total-coffee"></span>g of coffee needed, brew:
+              For the total <span data-from="totalCoffee"></span>g of coffee needed, brew:
               <ul>
-                <li id="show-full-batches"><span id="update-full-batches"></span> of 40g coffee to 200g water</li>
-                <li id="show-remainder">
-                  1 final batch using <span id="update-remainder"></span>g coffee to
-                  <span id="update-remainder-water"></span>g water
+                <li class="show-full-batches"><span data-from="fullBatches"></span> of 40g coffee to 200g water</li>
+                <li class="show-remainder">
+                  1 final batch using <span data-from="remainder"></span>g coffee to
+                  <span data-from="remainderWater"></span>g water
                 </li>
               </ul>
             </li>
             <li class="show-aeropress">
               After brewing all batches, weigh your combined coffee. You need exactly
-              <span class="update-coffee-liquid"></span>g of liquid total. Add cold water if you have too little, or
+              <span data-from="coffeeLiquid"></span>g of liquid total. Add cold water if you have too little, or
               remove some liquid if you have too much.
             </li>
             <li>
-              You need <span class="update-coffee-liquid"></span>g of coffee liquid total. This will be split into two
-              equal portions of <span class="update-half-coffee-liquid"></span>g for each layer. Allow to cool
+              You need <span data-from="coffeeLiquid"></span>g of coffee liquid total. This will be split into two
+              equal portions of <span data-from="halfCoffeeLiquid"></span>g for each layer. Allow to cool
               completely before using.
             </li>
-            <li>Add <span class="update-saline-drops"></span> drops of saline solution to the cooled coffee liquid.</li>
+            <li>Add <span data-from="salineDrops"></span> drops of saline solution to the cooled coffee liquid.</li>
             <li>
               Add all egg yolks to a ziplock bag and cook, using a sous vide circulator, at 60C for 30 minutes then cool
               completely. If you cannot use a sous vide, you can either use them raw or you can mix with the sugar and
@@ -265,14 +270,14 @@
             </li>
             <li>Begin the assembly. Prepare your chosen tray. This recipe presumes you will do it in two stages.</li>
             <li>
-              Pour <span class="update-half-coffee-liquid"></span>g of the coffee mixture in a suitable bowl. Take half
+              Pour <span data-from="halfCoffeeLiquid"></span>g of the coffee mixture in a suitable bowl. Take half
               the Savoiardi. Dunk the Savoiardi only on the non-sugared side. Then turn upside down and place in the
               tray. Repeat with all biscuits. You should have a little coffee left over. Starting with the last biscuits
               you dunked, use a pastry brush to add all the remaining coffee to the biscuits in the layer.
             </li>
             <li>Carefully put half of the mascarpone mixture on top of the biscuits.</li>
             <li>
-              Add the remaining <span class="update-half-coffee-liquid"></span>g of coffee to the bowl. Repeat the
+              Add the remaining <span data-from="halfCoffeeLiquid"></span>g of coffee to the bowl. Repeat the
               dunking of the remaining biscuits.
             </li>
             <li>Add the remaining mascarpone cream.</li>
