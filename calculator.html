@@ -97,7 +97,7 @@
 
       function getCoffeeAmount(brewMethod, biscuits, espressoDose) {
         if (brewMethod === 'espresso' && espressoDose > 0) {
-          const shots = calculateShots(biscuits, espressoDose)
+          const shots = calculateShots(calculateTotalCoffee(biscuits), espressoDose)
           return shots * espressoDose
         } else {
           return calculateTotalCoffee(biscuits)
