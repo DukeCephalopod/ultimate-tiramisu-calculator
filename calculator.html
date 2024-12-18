@@ -81,36 +81,30 @@
         return num.toFixed(1).replace(/\.0$/, '')
       }
 
-      function calculateTotalCoffee(biscuits) {
-        return biscuits * 4.5
-      }
+      function getBrewParameters(brewMethod, biscuits, espressoDose) {
+        const nominalGrams = biscuits * 4.5;
 
-      function calculateShots(totalCoffee, dose) {
-        if (dose === 0) {
-          return 0
-        }
-        const numShots = totalCoffee / dose
-        const decimal = numShots % 1
-        return decimal < 0.4 ? Math.floor(numShots) : Math.ceil(numShots)
-      }
-
-      function getCoffeeAmount(brewMethod, biscuits, espressoDose) {
         if (brewMethod === 'espresso' && espressoDose > 0) {
-          const shots = calculateShots(calculateTotalCoffee(biscuits), espressoDose)
-          return shots * espressoDose
-        } else {
-          return calculateTotalCoffee(biscuits)
+          const partialShots = nominalGrams / espressoDose
+          const decimal = partialShots % 1
+          const shots = (decimal < 0.4 ? Math.floor : Math.ceil)(partialShots)
+          return {
+            groundCoffeeGrams: shots * espressoDose,
+            shots,
+            fullBatches: 0,
+            remainder: 0,
+          };
         }
-      }
 
-      function calculateAeropressBatches(totalCoffee) {
-        const fullBatches = Math.floor(totalCoffee / 40)
-        const remainder = totalCoffee % 40
+        // aeropress
+        const fullBatches = Math.floor(nominalGrams / 40)
+        const remainder = nominalGrams % 40
         return {
+          groundCoffeeGrams: nominalGrams,
+          shots: 0,
           fullBatches,
           remainder,
-          remainderWater: remainder * 5
-        }
+        };
       }
 
       function displayIf(selector, shouldShow) {
@@ -125,27 +119,23 @@
         const brewMethod = document.querySelector('input[name="method"]:checked')?.value
         const espressoDose = Number.parseFloat(document.getElementById('dose')?.value || '0', 10)
 
-        const coffeeAmount = getCoffeeAmount(brewMethod, biscuits, espressoDose)
-        const totalCoffee = calculateTotalCoffee(biscuits)
-        const shots = calculateShots(totalCoffee, espressoDose)
-        const { fullBatches, remainder, remainderWater } = calculateAeropressBatches(totalCoffee)
-        const coffeeLiquid = biscuits * 15;
+        const { groundCoffeeGrams, shots, fullBatches, remainder } =
+          getBrewParameters(brewMethod, biscuits, espressoDose);
 
         const data = {
-          coffeeAmount: formatNumber(coffeeAmount),
-          coffeeLiquid: formatNumber(coffeeLiquid),
           biscuits: formatNumber(biscuits),
-          mascarponeAmount: formatNumber(biscuits * 20),
+          mascarponeGrams: formatNumber(biscuits * 20),
           eggYolks: formatNumber(biscuits * 0.25, true),
-          sugarAmount: formatNumber(biscuits * 4),
+          sugarGrams: formatNumber(biscuits * 4),
 
           shots: shots,
-          totalCoffee: formatNumber(totalCoffee),
+          groundCoffeeGrams: formatNumber(groundCoffeeGrams),
           fullBatches: `${fullBatches} batch${fullBatches > 1 ? 'es' : ''}`,
           remainder: formatNumber(remainder),
-          remainderWater: formatNumber(remainderWater),
+          remainderWater: formatNumber(remainder * 5),
 
-          halfCoffeeLiquid: formatNumber(coffeeLiquid / 2),
+          coffeeLiquid: formatNumber(biscuits * 15),
+          halfCoffeeLiquid: formatNumber(biscuits * 15 / 2),
           salineDrops: formatNumber(biscuits * 0.25, true),
         };
 
@@ -158,7 +148,9 @@
           }
         });
 
-        displayIf('#instructions', biscuits > 0);
+        displayIf('#instructions',
+          biscuits > 0 && (brewMethod === 'aeropress' || espressoDose > 0)
+        );
         displayIf('.show-aeropress', brewMethod === 'aeropress');
         displayIf('.show-espresso', brewMethod === 'espresso');
         displayIf('.show-full-batches', fullBatches > 0);
@@ -196,7 +188,7 @@
         </div>
         <div class="input-group show-espresso">
           <label for="dose">What is your typical ground coffee dose for a double espresso? (g)</label>
-          <input id="dose" type="number" class="input-field" min="0" autocomplete="off" onchange="update()" />
+          <input id="dose" type="number" class="input-field" min="0" autocomplete="off" oninput="update()" />
         </div>
       </div>
 
@@ -209,10 +201,10 @@
           <h3>Ingredients</h3>
           <ul>
             <li><span data-from="biscuits"></span> Savoiardi biscuits</li>
-            <li><span data-from="coffeeAmount"></span>g of ground coffee</li>
-            <li><span data-from="mascarponeAmount"></span>g of mascarpone cheese</li>
+            <li><span data-from="groundCoffeeGrams"></span>g of ground coffee</li>
+            <li><span data-from="mascarponeGrams"></span>g of mascarpone cheese</li>
             <li><span data-from="eggYolks"></span> egg yolks</li>
-            <li><span data-from="sugarAmount"></span>g of sugar</li>
+            <li><span data-from="sugarGrams"></span>g of sugar</li>
             <li>
               <span data-from="salineDrops"></span> drops saline solution (to make saline: dissolve 5g of salt in
               20g of boiling water, store in a dropper bottle)
@@ -237,7 +229,7 @@
           <ol>
             <li class="show-espresso">Brew <span data-from="shots"></span> double shots of espresso.</li>
             <li class="show-aeropress">
-              For the total <span data-from="totalCoffee"></span>g of coffee needed, brew:
+              For the total <span data-from="groundCoffeeGrams"></span>g of ground coffee, brew:
               <ul>
                 <li class="show-full-batches"><span data-from="fullBatches"></span> of 40g coffee to 200g water</li>
                 <li class="show-remainder">
