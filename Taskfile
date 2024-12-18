@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+build() {
+  cat pre.html.part calculator.html post.html.part > index.html
+}
+
+dev() {
+  npx live-server &
+  pid=$?
+  find . -maxdepth 1 -type f -name '*html*' -not -name 'index*' | entr ./Taskfile build
+  kill "$pid"
+}
+
+"$@"

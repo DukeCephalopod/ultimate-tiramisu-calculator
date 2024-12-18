@@ -1,0 +1,282 @@
+<html xmlns:og="http://opengraphprotocol.org/schema/" xmlns:fb="http://www.facebook.com/2008/fbml" lang="en-US" >
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <style>
+        .recipe-container {
+            max-width: 800px;
+            margin: 0 auto;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+        }
+        .recipe-section {
+            margin-top: 2rem;
+        }
+        .recipe-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        ul, ol {
+            padding-left: 1.5rem;
+        }
+        ul {
+            list-style-type: disc;
+        }
+        ol {
+            list-style-type: decimal;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        .brewing-note {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4a5568;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="tiramisu-recipe-root"></div>
+    <script type="text/babel">
+        const TiramisuRecipe = () => {
+            const [biscuits, setBiscuits] = React.useState('');
+            const [brewMethod, setBrewMethod] = React.useState('espresso');
+            const [espressoDose, setEspressoDose] = React.useState('');
+
+            const calculateShots = (biscuitCount, dose) => {
+                const totalCoffee = biscuitCount * 4.5;
+                const numShots = totalCoffee / Number(dose);
+                const decimal = numShots % 1;
+                return decimal < 0.4 ? Math.floor(numShots) : Math.ceil(numShots);
+            };
+
+            const calculateAeropressBatches = (totalCoffee) => {
+                const fullBatches = Math.floor(totalCoffee / 40);
+                const remainder = totalCoffee % 40;
+                return {
+                    fullBatches,
+                    remainder,
+                    remainderWater: remainder * 5
+                };
+            };
+
+            const formatNumber = (num, roundWhole = false) => {
+                if (roundWhole) {
+                    return Math.round(Number(num));
+                }
+                return Number(num).toFixed(1).replace(/\.0$/, '');
+            };
+
+            const getCoffeeAmount = () => {
+                if (brewMethod === 'espresso' && espressoDose) {
+                    const shots = calculateShots(biscuits, espressoDose);
+                    return shots * Number(espressoDose);
+                } else {
+                    return biscuits * 4.5;
+                }
+            };
+
+            const renderBrewingInstructions = () => {
+                if (brewMethod === 'espresso' && espressoDose) {
+                    const shots = calculateShots(biscuits, espressoDose);
+                    return <li>Brew {shots} double shots of espresso.</li>;
+                } else if (brewMethod === 'aeropress') {
+                    const totalCoffee = biscuits * 4.5;
+                    const { fullBatches, remainder, remainderWater } = calculateAeropressBatches(totalCoffee);
+                    return (
+                        <>
+                            <div className="brewing-note">
+                                <strong>Aeropress Brewing Instructions:</strong>
+                                <p>Use a fine grind setting - finer than typical pourover but coarser than espresso.</p>
+                                <p>For each batch:</p>
+                                <ul>
+                                    <li>Add coffee and water</li>
+                                    <li>Gently stir at 2 minutes</li>
+                                    <li>Gently stir again at 4 minutes</li>
+                                    <li>Press at 6 minutes total brew time</li>
+                                </ul>
+                            </div>
+                            <li>
+                                For the total {formatNumber(totalCoffee)}g of coffee needed, brew:
+                                {fullBatches > 0 && (
+                                    <ul>
+                                        <li>{fullBatches} batch{fullBatches > 1 ? 'es' : ''} of 40g coffee to 200g water</li>
+                                    </ul>
+                                )}
+                                {remainder > 0 && (
+                                    <ul>
+                                        <li>1 final batch using {formatNumber(remainder)}g coffee to {formatNumber(remainderWater)}g water</li>
+                                    </ul>
+                                )}
+                            </li>
+                        </>
+                    );
+                }
+            };
+
+            return (
+                <div className="recipe-container">
+                    <div className="card">
+                        <h2 className="text-xl font-bold mb-4">Tiramisu Recipe Calculator</h2>
+                        <div className="input-group">
+                            <label htmlFor="biscuits">Number of Savoiardi Biscuits</label>
+                            <input
+                                id="biscuits"
+                                type="number"
+                                className="input-field"
+                                value={biscuits}
+                                onChange={(e) => setBiscuits(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label>Brewing Method</label>
+                            <div className="radio-group">
+                                <label>
+                                    <input
+                                        type="radio"
+                                        value="espresso"
+                                        checked={brewMethod === 'espresso'}
+                                        onChange={(e) => setBrewMethod(e.target.value)}
+                                    />
+                                    {' '}Espresso Machine
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        value="aeropress"
+                                        checked={brewMethod === 'aeropress'}
+                                        onChange={(e) => setBrewMethod(e.target.value)}
+                                    />
+                                    {' '}Aeropress
+                                </label>
+                            </div>
+                        </div>
+
+                        {brewMethod === 'espresso' && (
+                            <div className="input-group">
+                                <label htmlFor="dose">What is your typical ground coffee dose for a double espresso? (g)</label>
+                                <input
+                                    id="dose"
+                                    type="number"
+                                    className="input-field"
+                                    value={espressoDose}
+                                    onChange={(e) => setEspressoDose(e.target.value)}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {biscuits && (
+                        <div className="card">
+                            <h2 className="text-xl font-bold mb-4">Your Tiramisu Recipe</h2>
+                            
+
+                            <div className="recipe-section">
+                                <h3>Ingredients</h3>
+                                <ul>
+                                    <li>{biscuits} Savoiardi biscuits</li>
+                                    <li>{formatNumber(getCoffeeAmount())}g of ground coffee</li>
+                                    <li>{formatNumber(biscuits * 20)}g of mascarpone cheese</li>
+                                    <li>{formatNumber(biscuits * 0.25, true)} egg yolks</li>
+                                    <li>{formatNumber(biscuits * 4)}g of sugar</li>
+                                    <li>{formatNumber(biscuits * 0.25, true)} drops saline solution (To make saline: dissolve 5g of salt in 20g of boiling water. Store in a dropper bottle.)</li>
+                                    <li>Cocoa Powder to finish</li>
+                                </ul>
+                            </div>
+
+                            <div className="recipe-section">
+                                <h3>Instructions</h3>
+                                <ol>
+                                    {renderBrewingInstructions()}
+                                    {brewMethod === 'aeropress' && (
+                                        <li>
+                                            After brewing all batches, weigh your combined coffee. You need exactly {formatNumber(biscuits * 15)}g 
+                                            of liquid total. Add cold water if you have too little, or remove some liquid if you have too much.
+                                        </li>
+                                    )}
+                                    <li>
+                                        You need {formatNumber(biscuits * 15)}g of coffee liquid total. This will be split into two equal portions 
+                                        of {formatNumber(biscuits * 7.5)}g for each layer. Allow to cool completely before using.
+                                    </li>
+                                    <li>
+                                        Add {formatNumber(biscuits * 0.25, true)} drops of saline solution to the cooled coffee liquid.
+                                    </li>
+                                    <li>
+                                        Add all egg yolks to a ziplock bag and cook, using a sous vide circulator, 
+                                        at 60C for 30 minutes then cool completely. If you cannot use a sous vide, 
+                                        you can either use them raw or you can mix with the sugar and heat in a 
+                                        bain marie to 70C, then quickly cool.
+                                    </li>
+                                    <li>
+                                        Mix the sugar and egg yolk using a hand mixer, or stand mixer, at a 
+                                        relatively low speed for 4 to 5 minutes. You should see the mixture 
+                                        increase in volume and begin to notably thicken.
+                                    </li>
+                                    <li>
+                                        Add the mascarpone in thirds, each time incorporating on lower speeds 
+                                        for 30 to 60 seconds. It doesn't need to be flawlessly mixed.
+                                    </li>
+                                    <li>
+                                        Begin the assembly. Prepare your chosen tray. This recipe presumes 
+                                        you will do it in two stages.
+                                    </li>
+                                    <li>
+                                        Pour {formatNumber(biscuits * 7.5)}g of the coffee mixture in a suitable bowl. Take half the Savoiardi. 
+                                        Dunk the Savoiardi only on the non-sugared side. Then turn upside down 
+                                        and place in the tray. Repeat with all biscuits. You should have a little 
+                                        coffee left over. Starting with the last biscuits you dunked, use a pastry 
+                                        brush to add all the remaining coffee to the biscuits in the layer.
+                                    </li>
+                                    <li>
+                                        Carefully put half of the mascarpone mixture on top of the biscuits.
+                                    </li>
+                                    <li>
+                                        Add the remaining {formatNumber(biscuits * 7.5)}g of coffee to the bowl. Repeat the dunking of the 
+                                        remaining biscuits.
+                                    </li>
+                                    <li>Add the remaining mascarpone cream.</li>
+                                    <li>Refrigerate for at least 8 hours, ideally 24.</li>
+                                    <li>Before serving dust with cocoa powder.</li>
+                                    <li>Serve and enjoy!</li>
+                                </ol>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<TiramisuRecipe />, document.getElementById('tiramisu-recipe-root'));
+    </script>
+</body>
+</html>
