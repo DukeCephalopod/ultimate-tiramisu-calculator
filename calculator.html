@@ -66,10 +66,6 @@
         padding: 1rem;
         margin: 1rem 0;
       }
-
-      #instructions {
-        display: none;
-      }
     </style>
   </head>
 
@@ -79,6 +75,9 @@
         if (roundWhole) {
           return Math.round(num)
         }
+
+        // toFixed(1) gives us 1 decimal point, then we remove
+        // trailing .0
         return num.toFixed(1).replace(/\.0$/, '')
       }
 
@@ -114,6 +113,13 @@
         }
       }
 
+      function displayIf(selector, shouldShow) {
+        document.querySelectorAll(selector).forEach(el => {
+          if (shouldShow) el.style.removeProperty('display');
+          else el.style.display = 'none';
+        });
+      }
+
       function update() {
         const biscuits = Number.parseInt(document.getElementById('biscuits')?.value || '0', 10)
         const brewMethod = document.querySelector('input[name="method"]:checked')?.value
@@ -125,7 +131,6 @@
         const { fullBatches, remainder, remainderWater } = calculateAeropressBatches(totalCoffee)
         const coffeeLiquid = biscuits * 15;
 
-        document.getElementById('instructions').style.display = biscuits > 0 ? 'block' : 'none'
         const data = {
           coffeeAmount: formatNumber(coffeeAmount),
           coffeeLiquid: formatNumber(coffeeLiquid),
@@ -152,19 +157,13 @@
             console.warn('Element', el, 'wants data from key', key, 'that has no value, skipping.');
           }
         });
-        document.querySelectorAll('.show-aeropress').forEach((el) => {
-          const showMode = el.nodeName === 'LI' ? 'list-item' : 'block'
-          el.style.display = brewMethod === 'aeropress' ? showMode : 'none'
-        })
-        document.querySelectorAll('.show-espresso').forEach((el) => {
-          const showMode = el.nodeName === 'LI' ? 'list-item' : 'block'
-          el.style.display = brewMethod === 'espresso' ? showMode : 'none'
-        })
-        document.getElementById('show-full-batches').style.display = fullBatches > 0 ? 'list-item' : 'none'
-        document.getElementById('show-remainder').style.display = remainder > 0 ? 'list-item' : 'none'
-      }
 
-      update()
+        displayIf('#instructions', biscuits > 0);
+        displayIf('.show-aeropress', brewMethod === 'aeropress');
+        displayIf('.show-espresso', brewMethod === 'espresso');
+        displayIf('.show-full-batches', fullBatches > 0);
+        displayIf('.show-remainder', remainder > 0);
+      }
     </script>
     <div class="recipe-container">
       <div class="card">
@@ -200,7 +199,10 @@
           <input id="dose" type="number" class="input-field" min="0" autocomplete="off" onchange="update()" />
         </div>
       </div>
-      <div class="card" id="instructions">
+
+      <!-- display:none is set as an inline style rather than in css so it mirrors the
+        state that javascript creates when manually setting `el.style.display = none`. -->
+      <div class="card" id="instructions" style="display: none">
         <h2 class="text-xl font-bold mb-4">Your Tiramisu Recipe</h2>
 
         <div class="recipe-section">
